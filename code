@@ -1,0 +1,106 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MEMORY_SIZE 100
+#define MAX_PROCESSES 10
+
+int memory[MEMORY_SIZE];
+int num_processes = 0;
+
+void init_memory() {
+    for (int i = 0; i < MEMORY_SIZE; i++) {
+        memory[i] = 0;
+    }
+}
+
+void print_memory() {
+    for (int i = 0; i < MEMORY_SIZE; i++) {
+        printf("%d ", memory[i]);
+    }
+    printf("\n");
+}
+
+int bestfit(int size) {
+    int start = -1;
+    int smallest = MEMORY_SIZE;
+    for (int i = 0; i < MEMORY_SIZE; i++) {
+        if (memory[i] == 0) {
+            int j = i;
+            int curr_size = 0;
+            while (j < MEMORY_SIZE && memory[j] == 0) {
+                curr_size++;
+                j++;
+            }
+            if (curr_size >= size && curr_size < smallest) {
+                smallest = curr_size;
+                start = i;
+            }
+        }
+    }
+    return start;
+}
+
+void allocate_memory(int size) {
+    int start = bestfit(size);
+    if (start != -1) {
+        for (int i = start; i < start + size; i++) {
+            memory[i] = num_processes + 1;
+        }
+        printf("Process %d allocated memory starting at address %d.\n", num_processes, start);
+        num_processes++;
+    } else {
+        printf("Process could not be allocated memory.\n");
+    }
+}
+
+void deallocate_memory(int pid) {
+    for (int i = 0; i < MEMORY_SIZE; i++) {
+        if (memory[i] == pid) {
+            memory[i] = 0;
+        }
+    }
+    printf("Process %d deallocated memory.\n", pid);
+}
+
+void simulate(int num_time_units) {
+    int fragmentation_total = 0;
+    int wasted_total = 0;
+    int num_simulations = 0;
+    for (int t = 0; t < num_time_units; t++) {
+        printf("Time unit %d:\n", t);
+        int size = rand() % 10 + 1;
+        allocate_memory(size);
+        size = rand() % 10 + 1;
+        allocate_memory(size);
+        int pid = rand() % num_processes + 1;
+        deallocate_memory(pid);
+        pid = rand() % num_processes + 1;
+        deallocate_memory(pid);
+        int fragmentation = 0;
+        int wasted = 0;
+        for (int i = 0; i < MEMORY_SIZE; i++) {
+            if (memory[i] == 0) {
+                wasted++;
+                while (i < MEMORY_SIZE && memory[i] == 0) {
+                    fragmentation++;
+                    i++;
+                }
+            }
+        }
+        fragmentation_total += fragmentation;
+        wasted_total += wasted;
+        num_simulations++;
+        printf("Fragmentation: %d, Wasted Memory: %d\n", fragmentation, wasted);
+    }
+    float avg_fragmentation = (float) fragmentation_total / num_simulations;
+    float avg_wasted = (float) wasted_total / num_simulations;
+    printf("\nAverage Fragmentation: %.2f\n", avg_fragmentation);
+    printf("Average Wasted Memory: %.2f\n", avg_wasted);
+}
+
+int main() {
+    srand(1); // set random seed for reproducibility
+    init_memory();
+    simulate(5);
+    return 0;
+}
